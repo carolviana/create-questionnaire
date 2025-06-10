@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criador de Questionários</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Criador de Questionários</h2>
+            </div>
+            <div class="sidebar-content">
+                <div class="questionnaire-metadata">
+                    <div class="form-group">
+                        <label for="questionnaireTitle">Título do Questionário</label>
+                        <input type="text" id="questionnaireTitle" placeholder="Digite o título">
+                    </div>
+                    <div class="form-group">
+                        <label for="questionnaireDescription">Descrição</label>
+                        <textarea id="questionnaireDescription" placeholder="Digite a descrição"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="questionnaireVersion">Versão</label>
+                        <input type="text" id="questionnaireVersion" placeholder="Ex: 1.0.0">
+                    </div>
+                </div>
+                <div class="export-options">
+                    <button id="exportEQuest2Btn" class="btn btn-export">
+                        <i class="fas fa-file-export"></i>
+                        Exportar eQuest2
+                    </button>
+                    <button id="exportEQuest3Btn" class="btn btn-export">
+                        <i class="fas fa-file-export"></i>
+                        Exportar eQuest3
+                    </button>
+                    <button id="toggleImportBtn" class="btn btn-secondary">
+                        <i class="fas fa-file-import"></i>
+                        Importar Questionário
+                    </button>
+                </div>
+                <div class="import-options hidden">
+                    <div class="import-section">
+                        <h4>Importar Questionário</h4>
+                        <div class="file-input-container">
+                            <input type="file" id="importFile" accept=".json" class="file-input">
+                            <div class="file-input-message">
+                                <i class="fas fa-file-import"></i>
+                                <span>Arraste um arquivo ou clique para selecionar</span>
+                                <small>Formatos suportados: eQuest2 e eQuest3</small>
+                            </div>
+                        </div>
+                        <div class="import-format-selector">
+                            <label>Formato do arquivo:</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="importFormat" value="eQuest2" checked>
+                                    <span>eQuest2</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="importFormat" value="eQuest3">
+                                    <span>eQuest3</span>
+                                </label>
+                            </div>
+                        </div>
+                        <button id="importBtn" class="btn btn-import" disabled>
+                            <i class="fas fa-file-import"></i>
+                            Importar Questionário
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <!-- Breadcrumbs -->
+            <div class="breadcrumbs">
+                <span class="breadcrumb-item">Questionário</span>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-item active">Blocos</span>
+            </div>
+
+            <!-- Atalhos de Teclado -->
+            <div class="keyboard-shortcuts">
+                <button class="btn btn-icon" title="Mostrar Atalhos">
+                    <i class="fas fa-keyboard"></i>
+                </button>
+            </div>
+
+            <div class="blocks-container">
+                <div class="blocks-header">
+                    <div class="blocks-header-left">
+                        <h2>Blocos de Perguntas</h2>
+                        <div class="blocks-stats">
+                            <span class="stat-item">
+                                <i class="fas fa-layer-group"></i>
+                                <span id="totalBlocks">0</span> blocos
+                            </span>
+                            <span class="stat-item">
+                                <i class="fas fa-question-circle"></i>
+                                <span id="totalQuestions">0</span> perguntas
+                            </span>
+                        </div>
+                    </div>
+                    <div class="blocks-header-right">
+                        <button id="importBlockBtn" class="btn btn-secondary">
+                            <i class="fas fa-file-import"></i>
+                            Importar Bloco
+                        </button>
+                        <button id="addBlockBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Novo Bloco
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Árvore de Blocos -->
+                <div id="blocksTree" class="blocks-tree">
+                    <!-- Blocos serão adicionados aqui dinamicamente -->
+                </div>
+
+                <!-- Reorder Controls -->
+                <div class="reorder-controls">
+                    <button id="moveBlockUpBtn" title="Mover para cima">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                    <button id="moveBlockDownBtn" title="Mover para baixo">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="blockEditor" class="block-editor hidden">
+                <div class="block-header">
+                    <div class="block-header-left">
+                        <div class="form-group">
+                            <label for="blockTitle">Título do Bloco</label>
+                            <input type="text" id="blockTitle" placeholder="Digite o título do bloco">
+                        </div>
+                        <div class="block-meta">
+                            <span class="block-color">
+                                <i class="fas fa-palette"></i>
+                                <div class="color-picker">
+                                    <button type="button" class="color-btn" data-color="#ffffff" style="background-color: #ffffff" title="Branco"></button>
+                                    <button type="button" class="color-btn" data-color="#fecaca" style="background-color: #fecaca" title="Rosa Claro"></button>
+                                    <button type="button" class="color-btn" data-color="#fef08a" style="background-color: #fef08a" title="Amarelo Claro"></button>
+                                    <button type="button" class="color-btn" data-color="#bbf7d0" style="background-color: #bbf7d0" title="Verde Claro"></button>
+                                    <button type="button" class="color-btn" data-color="#bfdbfe" style="background-color: #bfdbfe" title="Azul Claro"></button>
+                                    <button type="button" class="color-btn" data-color="#e9d5ff" style="background-color: #e9d5ff" title="Roxo Claro"></button>
+                                    <button type="button" class="color-btn" data-color="#fde68a" style="background-color: #fde68a" title="Âmbar Claro"></button>
+                                    <button type="button" class="color-btn" data-color="#a5f3fc" style="background-color: #a5f3fc" title="Ciano Claro"></button>
+                                    <button type="button" class="color-btn" data-color="#fae8ff" style="background-color: #fae8ff" title="Lavanda"></button>
+                                    <button type="button" class="color-btn" data-color="#f3e8ff" style="background-color: #f3e8ff" title="Violeta Claro"></button>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="block-header-right">
+                        <div class="block-actions">
+                            <button id="duplicateBlockBtn" class="btn btn-secondary" title="Duplicar Bloco">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button id="exportBlockBtn" class="btn btn-secondary" title="Exportar Bloco">
+                                <i class="fas fa-file-export"></i>
+                            </button>
+                            <button id="blockHistoryBtn" class="btn btn-secondary" title="Histórico">
+                                <i class="fas fa-history"></i>
+                            </button>
+                            <button id="deleteBlockBtn" class="btn btn-danger" title="Excluir Bloco">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button id="saveBlockBtn" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Salvar Bloco
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="questions-container">
+                    <div class="questions-header">
+                        <h3>Perguntas</h3>
+                        <button id="addQuestionBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Nova Pergunta
+                        </button>
+                    </div>
+                    <div id="questionsList" class="questions-list">
+                        <!-- Perguntas serão adicionadas aqui dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal de Histórico de Bloco -->
+        <div id="blockHistoryModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Histórico de Alterações</h3>
+                    <button type="button" class="btn btn-icon close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="history-list">
+                        <!-- Histórico será adicionado aqui dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Importação de Bloco -->
+        <div id="importBlockModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Importar Blocos</h3>
+                    <button type="button" class="btn btn-icon close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="import-form">
+                        <div class="form-group">
+                            <label for="importFile">Selecione os arquivos JSON</label>
+                            <div class="file-input-container">
+                                <input type="file" id="importFile" accept=".json" class="file-input" multiple>
+                                <div class="file-input-message">
+                                    <i class="fas fa-file-import"></i>
+                                    <span>Arraste arquivos ou clique para selecionar</span>
+                                    <small>Você pode selecionar múltiplos arquivos</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="selected-files">
+                            <h4>Arquivos Selecionados</h4>
+                            <div id="selectedFilesList" class="files-list">
+                                <!-- Lista de arquivos será adicionada aqui -->
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="maintainDependencies">
+                                <label for="maintainDependencies">Manter dependências ao importar</label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelImport">
+                                Cancelar
+                            </button>
+                            <button type="button" class="btn btn-primary" id="confirmImport">
+                                <i class="fas fa-file-import"></i>
+                                Importar Blocos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Atalhos de Teclado -->
+        <div id="shortcutsModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Atalhos de Teclado</h3>
+                    <button type="button" class="btn btn-icon close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="shortcuts-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + N</span>
+                            <span class="shortcut-description">Novo Bloco</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + S</span>
+                            <span class="shortcut-description">Salvar Bloco</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + D</span>
+                            <span class="shortcut-description">Duplicar Bloco</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + Z</span>
+                            <span class="shortcut-description">Desfazer</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + Y</span>
+                            <span class="shortcut-description">Refazer</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Form Modal -->
+        <div id="questionForm" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Adicionar Pergunta</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <form id="questionFormElement" class="question-form">
+                    <!-- Campos básicos -->
+                    <div class="section">
+                        <div class="form-group">
+                            <label for="questionType">Tipo de Pergunta</label>
+                            <select id="questionType" required>
+                                <option value="NotAnswerableQuestion">Não Respondível</option>
+                                <option value="EditQuestion">Edição</option>
+                                <option value="OnlyOneChoiceQuestion">Escolha Única</option>
+                                <option value="MultipleChoiceQuestion">Múltipla Escolha</option>
+                                <option value="GeoLocationQuestion">Localização Geográfica</option>
+                                <option value="PearsonCreatorQuestion">Criador Pearson</option>
+                                <option value="ReplicationQuestion">Replicação</option>
+                                <option value="ReplicableItemQuestion">Item Replicável</option>
+                                <option value="MediaQuestion">Mídia</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="questionId">ID</label>
+                            <input type="text" id="questionId" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="questionTitle">Título</label>
+                            <input type="text" id="questionTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="questionBehavior">Comportamento</label>
+                            <input type="text" id="questionBehavior">
+                        </div>
+                    </div>
+
+                    <!-- Campos de mídia -->
+                    <div class="section media-fields hidden">
+                        <h3 class="section-title">Mídia</h3>
+                        <div class="form-group">
+                            <label for="questionMedia">URL da Mídia</label>
+                            <input type="text" id="questionMedia">
+                        </div>
+                    </div>
+
+                    <!-- Campos de opções -->
+                    <div class="section options-fields hidden">
+                        <h3 class="section-title">Opções</h3>
+                        <div id="optionsContainer"></div>
+                        <button type="button" class="add-btn" id="addOptionBtn">
+                            <i class="fas fa-plus"></i>
+                            Adicionar Opção
+                        </button>
+                        <div class="form-group">
+                            <label for="opOther">Outra Opção</label>
+                            <input type="text" id="opOther">
+                        </div>
+                    </div>
+
+                    <!-- Campos de tamanho -->
+                    <div class="section size-fields hidden">
+                        <h3 class="section-title">Tamanho</h3>
+                        <div class="form-group">
+                            <label for="questionSize">Tamanho</label>
+                            <input type="text" id="questionSize">
+                        </div>
+                    </div>
+
+                    <!-- Campos de referência -->
+                    <div class="section reference-fields hidden">
+                        <h3 class="section-title">Referência</h3>
+                        <div class="form-group">
+                            <label for="questionReference">Referência</label>
+                            <input type="text" id="questionReference">
+                        </div>
+                    </div>
+
+                    <!-- Campos de replicação -->
+                    <div class="section replication-fields hidden">
+                        <h3 class="section-title">Replicação</h3>
+                        <div class="form-group">
+                            <label for="questionReplication">Replicação</label>
+                            <input type="text" id="questionReplication">
+                        </div>
+                    </div>
+
+                    <!-- Campos de números -->
+                    <div class="section number-fields hidden">
+                        <h3 class="section-title">Números</h3>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="allowOnlyNumbers">
+                            <label for="allowOnlyNumbers">Permitir apenas números</label>
+                        </div>
+                    </div>
+
+                    <!-- Campos "Não mostrar" -->
+                    <div class="section dont-show-fields hidden">
+                        <h3 class="section-title">Opções de Exibição</h3>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showDontKnow">
+                            <label for="showDontKnow">Mostrar "Não sei"</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showDontAnswer">
+                            <label for="showDontAnswer">Mostrar "Não responder"</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showDontApply">
+                            <label for="showDontApply">Mostrar "Não se aplica"</label>
+                        </div>
+                    </div>
+
+                    <!-- Campos de dependências -->
+                    <div class="section">
+                        <h3 class="section-title">Dependências</h3>
+                        <div id="dependenciesContainer"></div>
+                        <button type="button" class="add-btn" id="addDependencyBtn">
+                            <i class="fas fa-plus"></i>
+                            Adicionar Dependência
+                        </button>
+                    </div>
+
+                    <!-- Botões de ação -->
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn">Cancelar</button>
+                        <button type="submit" class="save-btn">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/models.js"></script>
+    <script src="js/questionnaire.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 
