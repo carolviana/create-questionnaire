@@ -192,6 +192,137 @@
                         <!-- Perguntas serão adicionadas aqui dinamicamente -->
                     </div>
                 </div>
+                
+                <!-- Question Form Inline -->
+                <div id="questionForm" class="question-form hidden-inline">
+                    <div class="form-header">
+                        <h2>Adicionar Pergunta</h2>
+                        <button type="button" class="close-inline-btn">&times;</button>
+                    </div>
+                    <form id="questionFormElement" class="question-form-content">
+                        <!-- Campos básicos -->
+                        <div class="section">
+                            <div class="form-group">
+                                <label for="questionType">Tipo de Pergunta</label>
+                                <select id="questionType" required>
+                                    <option value="NotAnswerableQuestion">Não Respondível</option>
+                                    <option value="EditQuestion">Edição</option>
+                                    <option value="OnlyOneChoiceQuestion">Escolha Única</option>
+                                    <option value="MultipleChoiceQuestion">Múltipla Escolha</option>
+                                    <option value="GeoLocationQuestion">Localização Geográfica</option>
+                                    <option value="PearsonCreatorQuestion">Criador Pearson</option>
+                                    <option value="ReplicationQuestion">Replicação</option>
+                                    <option value="ReplicableItemQuestion">Item Replicável</option>
+                                    <option value="MediaQuestion">Mídia</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="questionId">ID</label>
+                                <input type="text" id="questionId" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="questionTitle">Título</label>
+                                <input type="text" id="questionTitle" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="questionBehavior">Comportamento</label>
+                                <input type="text" id="questionBehavior">
+                            </div>
+                        </div>
+
+                        <!-- Campos de mídia -->
+                        <div class="section media-fields hidden">
+                            <h3 class="section-title">Mídia</h3>
+                            <div class="form-group">
+                                <label for="questionMedia">URL da Mídia</label>
+                                <input type="text" id="questionMedia">
+                            </div>
+                        </div>
+
+                        <!-- Campos de opções -->
+                        <div class="section options-fields hidden">
+                            <h3 class="section-title">Opções</h3>
+                            <div id="optionsContainer"></div>
+                            <button type="button" class="add-btn" id="addOptionBtn">
+                                <i class="fas fa-plus"></i>
+                                Adicionar Opção
+                            </button>
+                            <div class="form-group">
+                                <label for="opOther">Outra Opção</label>
+                                <input type="text" id="opOther">
+                            </div>
+                        </div>
+
+                        <!-- Campos de tamanho -->
+                        <div class="section size-fields hidden">
+                            <h3 class="section-title">Tamanho</h3>
+                            <div class="form-group">
+                                <label for="questionSize">Tamanho</label>
+                                <input type="text" id="questionSize">
+                            </div>
+                        </div>
+
+                        <!-- Campos de referência -->
+                        <div class="section reference-fields hidden">
+                            <h3 class="section-title">Referência</h3>
+                            <div class="form-group">
+                                <label for="questionReference">Referência</label>
+                                <input type="text" id="questionReference">
+                            </div>
+                        </div>
+
+                        <!-- Campos de replicação -->
+                        <div class="section replication-fields hidden">
+                            <h3 class="section-title">Replicação</h3>
+                            <div class="form-group">
+                                <label for="questionReplication">Replicação</label>
+                                <input type="text" id="questionReplication">
+                            </div>
+                        </div>
+
+                        <!-- Campos de números -->
+                        <div class="section number-fields hidden">
+                            <h3 class="section-title">Números</h3>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="allowOnlyNumbers">
+                                <label for="allowOnlyNumbers">Permitir apenas números</label>
+                            </div>
+                        </div>
+
+                        <!-- Campos "Não mostrar" -->
+                        <div class="section dont-show-fields hidden">
+                            <h3 class="section-title">Opções de Exibição</h3>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showDontKnow">
+                                <label for="showDontKnow">Mostrar "Não sei"</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showDontAnswer">
+                                <label for="showDontAnswer">Mostrar "Não responder"</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showDontApply">
+                                <label for="showDontApply">Mostrar "Não se aplica"</label>
+                            </div>
+                        </div>
+
+                        <!-- Campos de dependências -->
+                        <div class="section">
+                            <h3 class="section-title">Dependências</h3>
+                            <div id="dependenciesContainer"></div>
+                            <button type="button" class="add-btn" id="addDependencyBtn">
+                                <i class="fas fa-plus"></i>
+                                Adicionar Dependência
+                            </button>
+                        </div>
+
+                        <!-- Botões de ação -->
+                        <div class="form-actions">
+                            <button type="button" class="cancel-btn" id="cancelQuestionBtn">Cancelar</button>
+                            <button type="submit" class="save-btn">Salvar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </main>
 
@@ -296,139 +427,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Question Form Modal -->
-        <div id="questionForm" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Adicionar Pergunta</h2>
-                    <button class="close-btn">&times;</button>
-                </div>
-                <form id="questionFormElement" class="question-form">
-                    <!-- Campos básicos -->
-                    <div class="section">
-                        <div class="form-group">
-                            <label for="questionType">Tipo de Pergunta</label>
-                            <select id="questionType" required>
-                                <option value="NotAnswerableQuestion">Não Respondível</option>
-                                <option value="EditQuestion">Edição</option>
-                                <option value="OnlyOneChoiceQuestion">Escolha Única</option>
-                                <option value="MultipleChoiceQuestion">Múltipla Escolha</option>
-                                <option value="GeoLocationQuestion">Localização Geográfica</option>
-                                <option value="PearsonCreatorQuestion">Criador Pearson</option>
-                                <option value="ReplicationQuestion">Replicação</option>
-                                <option value="ReplicableItemQuestion">Item Replicável</option>
-                                <option value="MediaQuestion">Mídia</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="questionId">ID</label>
-                            <input type="text" id="questionId" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="questionTitle">Título</label>
-                            <input type="text" id="questionTitle" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="questionBehavior">Comportamento</label>
-                            <input type="text" id="questionBehavior">
-                        </div>
-                    </div>
-
-                    <!-- Campos de mídia -->
-                    <div class="section media-fields hidden">
-                        <h3 class="section-title">Mídia</h3>
-                        <div class="form-group">
-                            <label for="questionMedia">URL da Mídia</label>
-                            <input type="text" id="questionMedia">
-                        </div>
-                    </div>
-
-                    <!-- Campos de opções -->
-                    <div class="section options-fields hidden">
-                        <h3 class="section-title">Opções</h3>
-                        <div id="optionsContainer"></div>
-                        <button type="button" class="add-btn" id="addOptionBtn">
-                            <i class="fas fa-plus"></i>
-                            Adicionar Opção
-                        </button>
-                        <div class="form-group">
-                            <label for="opOther">Outra Opção</label>
-                            <input type="text" id="opOther">
-                        </div>
-                    </div>
-
-                    <!-- Campos de tamanho -->
-                    <div class="section size-fields hidden">
-                        <h3 class="section-title">Tamanho</h3>
-                        <div class="form-group">
-                            <label for="questionSize">Tamanho</label>
-                            <input type="text" id="questionSize">
-                        </div>
-                    </div>
-
-                    <!-- Campos de referência -->
-                    <div class="section reference-fields hidden">
-                        <h3 class="section-title">Referência</h3>
-                        <div class="form-group">
-                            <label for="questionReference">Referência</label>
-                            <input type="text" id="questionReference">
-                        </div>
-                    </div>
-
-                    <!-- Campos de replicação -->
-                    <div class="section replication-fields hidden">
-                        <h3 class="section-title">Replicação</h3>
-                        <div class="form-group">
-                            <label for="questionReplication">Replicação</label>
-                            <input type="text" id="questionReplication">
-                        </div>
-                    </div>
-
-                    <!-- Campos de números -->
-                    <div class="section number-fields hidden">
-                        <h3 class="section-title">Números</h3>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="allowOnlyNumbers">
-                            <label for="allowOnlyNumbers">Permitir apenas números</label>
-                        </div>
-                    </div>
-
-                    <!-- Campos "Não mostrar" -->
-                    <div class="section dont-show-fields hidden">
-                        <h3 class="section-title">Opções de Exibição</h3>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="showDontKnow">
-                            <label for="showDontKnow">Mostrar "Não sei"</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="showDontAnswer">
-                            <label for="showDontAnswer">Mostrar "Não responder"</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="showDontApply">
-                            <label for="showDontApply">Mostrar "Não se aplica"</label>
-                        </div>
-                    </div>
-
-                    <!-- Campos de dependências -->
-                    <div class="section">
-                        <h3 class="section-title">Dependências</h3>
-                        <div id="dependenciesContainer"></div>
-                        <button type="button" class="add-btn" id="addDependencyBtn">
-                            <i class="fas fa-plus"></i>
-                            Adicionar Dependência
-                        </button>
-                    </div>
-
-                    <!-- Botões de ação -->
-                    <div class="form-actions">
-                        <button type="button" class="cancel-btn">Cancelar</button>
-                        <button type="submit" class="save-btn">Salvar</button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>

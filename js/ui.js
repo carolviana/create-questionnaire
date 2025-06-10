@@ -1,5 +1,6 @@
 class QuestionnaireUI {
     constructor(questionnaireManager) {
+        console.log('[UI] QuestionnaireUI inicializado.');
         this.questionnaireManager = questionnaireManager;
         this.currentBlockId = null;
         this.currentQuestionId = null;
@@ -39,8 +40,13 @@ class QuestionnaireUI {
         this.questionsList = document.getElementById('questionsList');
         this.addQuestionBtn = document.getElementById('addQuestionBtn');
 
-        // Modals
+        // Inline Question Form
         this.questionForm = document.getElementById('questionForm');
+        this.questionFormElement = document.getElementById('questionFormElement');
+        this.cancelQuestionBtn = document.getElementById('cancelQuestionBtn');
+        this.lastEditedQuestionElement = null;
+
+        // Modals
         this.blockHistoryModal = document.getElementById('blockHistoryModal');
         this.importBlockModal = document.getElementById('importBlockModal');
         this.shortcutsModal = document.getElementById('shortcutsModal');
@@ -140,6 +146,18 @@ class QuestionnaireUI {
             btn.addEventListener('click', () => this.closeModals());
         });
 
+        // Inline Question Form
+        if (this.questionFormElement) {
+            this.questionFormElement.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveQuestion();
+            });
+        }
+
+        if (this.cancelQuestionBtn) {
+            this.cancelQuestionBtn.addEventListener('click', () => this.hideQuestionForm());
+        }
+
         // Import Block
         const importFile = document.getElementById('importFile');
         if (importFile) {
@@ -162,30 +180,6 @@ class QuestionnaireUI {
         const cancelImport = document.getElementById('cancelImport');
         if (cancelImport) {
             cancelImport.addEventListener('click', () => this.closeModals());
-        }
-
-        // Question Form
-        const questionFormElement = document.getElementById('questionFormElement');
-        if (questionFormElement) {
-            questionFormElement.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.saveQuestion();
-            });
-        }
-
-        const addOptionBtn = document.getElementById('addOptionBtn');
-        if (addOptionBtn) {
-            addOptionBtn.addEventListener('click', () => this.addOptionField());
-        }
-
-        const addDependencyBtn = document.getElementById('addDependencyBtn');
-        if (addDependencyBtn) {
-            addDependencyBtn.addEventListener('click', () => this.addDependencyField());
-        }
-
-        const cancelQuestionBtn = document.getElementById('cancelQuestionBtn');
-        if (cancelQuestionBtn) {
-            cancelQuestionBtn.addEventListener('click', () => this.closeModals());
         }
 
         // Reorder Controls
@@ -301,8 +295,9 @@ class QuestionnaireUI {
     }
 
     createQuestionElement(question) {
+        console.log(`[UI] Criando elemento para pergunta ID: ${question.id}, isExpanded: ${question.isExpanded}`);
         const div = document.createElement('div');
-        div.className = 'tree-item question-item';
+        div.className = `tree-item question-item ${question.id === this.currentQuestionId ? 'editing-question' : ''}`;
         div.dataset.questionId = question.id;
 
         const questionTypeMap = {
@@ -327,20 +322,20 @@ class QuestionnaireUI {
                 ${question.title} <span class="question-type-display">(${friendlyType})</span>
             </div>
             <div class="question-actions">
-                <button class="btn btn-icon btn-secondary edit-question-btn" title="Editar Pergunta">
+                <button class="btn btn-icon btn-secondary edit-question-btn" title="Editar Pergunta" data-question-id="${question.id}">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-icon btn-danger delete-question-btn" title="Excluir Pergunta">
+                <button class="btn btn-icon btn-danger delete-question-btn" title="Excluir Pergunta" data-question-id="${question.id}">
                     <i class="fas fa-trash"></i>
                 </button>
                 <button class="btn btn-icon toggle-question-btn" title="Expandir/Colapsar">
-                    <i class="fas fa-chevron-down"></i>
+                    <i class="fas ${question.isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}"></i>
                 </button>
             </div>
         `;
 
         const content = document.createElement('div');
-        content.className = 'question-item-content hidden';
+        content.className = `question-item-content ${question.isExpanded ? '' : 'hidden'}`;
         content.innerHTML = `
             <div class="question-detail"><strong>Tipo:</strong> ${friendlyType}</div>
             ${question.behavior ? `<div class="question-detail"><strong>Comportamento:</strong> ${question.behavior}</div>` : ''}
@@ -378,6 +373,7 @@ class QuestionnaireUI {
             if (e.target.closest('.edit-question-btn') || e.target.closest('.delete-question-btn') || e.target.closest('.toggle-question-btn')) {
                 return;
             }
+            question.isExpanded = !question.isExpanded;
             content.classList.toggle('hidden');
             const icon = header.querySelector('.toggle-question-btn i');
             if (content.classList.contains('hidden')) {
@@ -390,6 +386,7 @@ class QuestionnaireUI {
         // Event listener específico para o botão de toggle
         header.querySelector('.toggle-question-btn').addEventListener('click', (e) => {
             e.stopPropagation(); // Impede que o clique no botão de toggle propague para o cabeçalho
+            question.isExpanded = !question.isExpanded;
             content.classList.toggle('hidden');
             const icon = header.querySelector('.toggle-question-btn i');
             if (content.classList.contains('hidden')) {
@@ -400,15 +397,25 @@ class QuestionnaireUI {
         });
 
         // Event listeners para os botões de ação
-        header.querySelector('.edit-question-btn').addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita que o clique propague para o toggle
-            this.editQuestion(question.id);
-        });
+        const editBtn = header.querySelector('.edit-question-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Evita que o clique propague para o toggle
+                console.log(`[UI] Botão Editar clicado para a pergunta ID: ${e.currentTarget.dataset.questionId}`);
+                this.editQuestion(e.currentTarget.dataset.questionId);
+            });
+            console.log(`[UI] Event listener de edição anexado para a pergunta ID: ${question.id}`);
+        }
 
-        header.querySelector('.delete-question-btn').addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita que o clique propague para o toggle
-            this.deleteQuestion(question.id);
-        });
+        const deleteBtn = header.querySelector('.delete-question-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Evita que o clique propague para o toggle
+                console.log(`[UI] Botão Excluir clicado para a pergunta ID: ${e.currentTarget.dataset.questionId}`);
+                this.deleteQuestion(e.currentTarget.dataset.questionId);
+            });
+            console.log(`[UI] Event listener de exclusão anexado para a pergunta ID: ${question.id}`);
+        }
 
         return div;
     }
@@ -724,7 +731,6 @@ class QuestionnaireUI {
     }
 
     closeModals() {
-        this.questionForm.classList.add('hidden');
         this.blockHistoryModal.classList.add('hidden');
         this.importBlockModal.classList.add('hidden');
         this.shortcutsModal.classList.add('hidden');
@@ -753,9 +759,46 @@ class QuestionnaireUI {
     }
 
     showQuestionForm(question = null) {
-        this.questionForm.classList.remove('hidden');
-        const form = document.getElementById('questionFormElement');
-        form.reset();
+        // Sempre garante que o formulário está visível
+        this.questionForm.classList.remove('hidden-inline');
+
+        // Remover o formulário de sua posição atual, se estiver no DOM
+        if (this.questionForm.parentNode) {
+            this.questionForm.parentNode.removeChild(this.questionForm);
+        }
+
+        // Inserir o formulário na posição correta
+        if (question) {
+            const questionElement = document.querySelector(`[data-question-id="${question.id}"]`);
+            if (questionElement && questionElement.parentNode) {
+                questionElement.parentNode.insertBefore(this.questionForm, questionElement.nextSibling);
+                this.currentQuestionId = question.id; // Garante que currentQuestionId esteja sempre atualizado para o destaque
+                // Garante que a pergunta está expandida ao abrir o formulário
+                if (question.isExpanded === false) {
+                    question.isExpanded = true;
+                    const content = questionElement.querySelector('.question-item-content');
+                    if (content) content.classList.remove('hidden');
+                    const icon = questionElement.querySelector('.toggle-question-btn i');
+                    if (icon) icon.className = 'fas fa-chevron-up';
+                }
+                questionElement.classList.add('editing-question'); // Adiciona a classe de destaque diretamente
+
+            } else {
+                // Fallback: se o elemento da pergunta não for encontrado, adiciona ao final da lista de perguntas
+                this.questionsList.appendChild(this.questionForm);
+                this.currentQuestionId = null; 
+            }
+        } else {
+            // Se for uma nova pergunta, adiciona ao final da lista de perguntas
+            this.questionsList.appendChild(this.questionForm);
+            this.currentQuestionId = null;
+        }
+
+        // Agora que o formulário está no DOM, podemos resetá-lo e preenchê-lo
+        this.questionFormElement.reset(); // Usar a referência da classe
+
+        // Scroll para o formulário após posicioná-lo
+        this.questionForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         // Configurar campos baseados no tipo de pergunta
         const typeSelect = document.getElementById('questionType');
@@ -797,6 +840,22 @@ class QuestionnaireUI {
             // Limpar o formulário e mostrar campos padrão
             this.updateQuestionFields(typeSelect.value);
         }
+    }
+
+    hideQuestionForm() {
+        this.questionForm.classList.add('hidden-inline');
+        
+        // Voltar o foco para a pergunta que estava sendo editada, se houver
+        if (this.currentQuestionId) {
+            // Encontrar o elemento da pergunta recém-renderizado (se houver, pois render() pode ter sido chamado)
+            const questionElement = document.querySelector(`[data-question-id="${this.currentQuestionId}"]`);
+            if (questionElement) {
+                questionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                questionElement.focus(); // Opcional: tenta focar no elemento
+            }
+        }
+        this.currentQuestionId = null; // Limpa o ID da pergunta atual APÓS a operação
+        this.render(); // Adicionado: Re-renderiza a UI para garantir que o destaque seja removido se o currentQuestionId foi nullified
     }
 
     updateQuestionFields(type) {
@@ -950,16 +1009,19 @@ class QuestionnaireUI {
             // Update existing question
             const questionIndex = block.questions.findIndex(q => q.id === this.currentQuestionId);
             if (questionIndex !== -1) {
+                // Preservar o estado isExpanded da pergunta original
+                const originalQuestion = block.questions[questionIndex];
+                questionData.isExpanded = originalQuestion.isExpanded; 
                 block.questions[questionIndex] = new Question(questionData);
             }
         } else {
-            // Add new question
+            // Add new question (isExpanded defaults to false in Question constructor)
             block.addQuestion(new Question(questionData));
         }
 
         block.saveVersion('Atualização de pergunta');
-        this.closeModals();
-        this.render();
+        this.render(); // Renderiza ANTES de esconder o formulário para manter o estado
+        this.hideQuestionForm(); // Esconde o formulário e remove o destaque
     }
 
     getLightColor(color) {

@@ -270,6 +270,12 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
+.question-item.editing-question {
+    background-color: #f0f0f0;
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+}
+
 .question-item-header {
     display: flex;
     justify-content: space-between;
@@ -403,28 +409,68 @@ body {
     z-index: 1000;
 }
 
-.modal-content {
+.question-form {
     background-color: var(--surface-color);
     border-radius: 0.5rem;
-    box-shadow: var(--shadow-md);
-    width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
-    overflow-y: auto;
-    transition: background-color 0.3s ease;
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out, margin 0.3s ease-out;
+    max-height: 2000px;
+    opacity: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.modal-header {
+.question-form.hidden-inline {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    margin-top: 0;
+    border: none;
+}
+
+.form-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--border-color);
 }
 
-.modal-header h3 {
-    font-size: 1.25rem;
+.form-header h2 {
+    font-size: 1.1rem;
     font-weight: 600;
+    color: var(--text-color);
+}
+
+.close-inline-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-inline-btn:hover {
+    color: var(--danger-color);
+}
+
+.question-form-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.question-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 /* Options and Dependencies */
@@ -882,13 +928,6 @@ body {
 .tree-item.selected {
     background-color: rgba(0, 123, 255, 0.1);
     border: 1px solid #007bff;
-}
-
-.question-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
 }
 
 .question-form .form-group {

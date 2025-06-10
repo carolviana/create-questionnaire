@@ -15,6 +15,7 @@ class Question {
         this.showDontAnswer = data.showDontAnswer || false;
         this.showDontApply = data.showDontApply || false;
         this.dependencies = data.dependencies || [];
+        this.isExpanded = data.isExpanded || false;
     }
 
     toEQuest2() {
