@@ -303,17 +303,113 @@ class QuestionnaireUI {
     createQuestionElement(question) {
         const div = document.createElement('div');
         div.className = 'tree-item question-item';
-        div.innerHTML = `
-            <div class="question-title">${question.title}</div>
-            <div class="question-meta">
-                <span class="question-type">${question.type}</span>
-                ${question.dependencies.length ? 
-                    `<span class="question-dependencies">
-                        <i class="fas fa-link"></i>
-                        ${question.dependencies.length}
-                    </span>` : ''}
+        div.dataset.questionId = question.id;
+
+        const questionTypeMap = {
+            'NotAnswerableQuestion': 'Exibir Texto',
+            'EditQuestion': 'Pergunta Texto',
+            'OnlyOneChoiceQuestion': 'Múltipla Escolha (Resposta Única)',
+            'MultipleChoiceQuestion': 'Múltipla Escolha (Respostas Múltiplas)',
+            'GeoLocationQuestion': 'Localização Geográfica',
+            'PearsonCreatorQuestion': 'Criar indivíduos',
+            'ReplicationQuestion': 'Pergunta de Repetição',
+            'ReplicableItemQuestion': 'Pergunta Item de Repetição',
+            'MediaQuestion': 'Exibir Mídia'
+        };
+
+        const friendlyType = questionTypeMap[question.type] || question.type;
+
+        const header = document.createElement('div');
+        header.className = 'question-item-header';
+        header.innerHTML = `
+            <span class="question-id">${question.id}</span>
+            <div class="question-title-text">
+                ${question.title} <span class="question-type-display">(${friendlyType})</span>
+            </div>
+            <div class="question-actions">
+                <button class="btn btn-icon btn-secondary edit-question-btn" title="Editar Pergunta">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-icon btn-danger delete-question-btn" title="Excluir Pergunta">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="btn btn-icon toggle-question-btn" title="Expandir/Colapsar">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
             </div>
         `;
+
+        const content = document.createElement('div');
+        content.className = 'question-item-content hidden';
+        content.innerHTML = `
+            <div class="question-detail"><strong>Tipo:</strong> ${friendlyType}</div>
+            ${question.behavior ? `<div class="question-detail"><strong>Comportamento:</strong> ${question.behavior}</div>` : ''}
+            ${question.media ? `<div class="question-detail"><strong>Mídia:</strong> <a href="${question.media}" target="_blank">${question.media}</a></div>` : ''}
+            ${question.OpOther ? `<div class="question-detail"><strong>Outra Opção:</strong> ${question.OpOther}</div>` : ''}
+            ${question.size ? `<div class="question-detail"><strong>Tamanho:</strong> ${question.size}</div>` : ''}
+            ${question.reference ? `<div class="question-detail"><strong>Referência:</strong> ${question.reference}</div>` : ''}
+            ${question.replication ? `<div class="question-detail"><strong>Replicação:</strong> ${question.replication}</div>` : ''}
+            ${question.allowOnlyNumbers ? `<div class="question-detail"><strong>Permite Apenas Números:</strong> Sim</div>` : ''}
+            ${question.showDontKnow ? `<div class="question-detail"><strong>Mostrar "Não sei":</strong> Sim</div>` : ''}
+            ${question.showDontAnswer ? `<div class="question-detail"><strong>Mostrar "Não responder":</strong> Sim</div>` : ''}
+            ${question.showDontApply ? `<div class="question-detail"><strong>Mostrar "Não se aplica":</strong> Sim</div>` : ''}
+            
+            ${question.Options && Object.keys(question.Options).length > 0 ? `
+                <div class="question-detail"><strong>Opções:</strong>
+                    <ul>
+                        ${Object.entries(question.Options).map(([key, value]) => `<li>${key}: ${value}</li>`).join('')}
+                    </ul>
+                </div>` : ''}
+
+            ${question.dependencies && question.dependencies.length > 0 ? `
+                <div class="question-detail"><strong>Dependências:</strong>
+                    <ul>
+                        ${question.dependencies.map(dep => `<li>ID: ${dep.dependencyID}, Valor: ${dep.dependencyValue}${dep.operator ? `, Operador: ${dep.operator}` : ''}</li>`).join('')}
+                    </ul>
+                </div>` : ''}
+        `;
+
+        div.appendChild(header);
+        div.appendChild(content);
+
+        // Event listener para o cabeçalho para expandir/colapsar
+        header.addEventListener('click', (e) => {
+            // Evita que o clique nos botões de ação ou no próprio toggle button expanda/colapse
+            if (e.target.closest('.edit-question-btn') || e.target.closest('.delete-question-btn') || e.target.closest('.toggle-question-btn')) {
+                return;
+            }
+            content.classList.toggle('hidden');
+            const icon = header.querySelector('.toggle-question-btn i');
+            if (content.classList.contains('hidden')) {
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                icon.className = 'fas fa-chevron-up';
+            }
+        });
+
+        // Event listener específico para o botão de toggle
+        header.querySelector('.toggle-question-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // Impede que o clique no botão de toggle propague para o cabeçalho
+            content.classList.toggle('hidden');
+            const icon = header.querySelector('.toggle-question-btn i');
+            if (content.classList.contains('hidden')) {
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                icon.className = 'fas fa-chevron-up';
+            }
+        });
+
+        // Event listeners para os botões de ação
+        header.querySelector('.edit-question-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita que o clique propague para o toggle
+            this.editQuestion(question.id);
+        });
+
+        header.querySelector('.delete-question-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita que o clique propague para o toggle
+            this.deleteQuestion(question.id);
+        });
+
         return div;
     }
 
@@ -1438,6 +1534,18 @@ class QuestionnaireUI {
     }
 
     validateQuestionnaireFormat(data, format) {
+        const questionTypeMap = {
+            'NotAnswerableQuestion': 'Exibir Texto',
+            'EditQuestion': 'Pergunta Texto',
+            'OnlyOneChoiceQuestion': 'Múltipla Escolha (Resposta Única)',
+            'MultipleChoiceQuestion': 'Múltipla Escolha (Respostas Múltiplas)',
+            'GeoLocationQuestion': 'Localização Geográfica',
+            'PearsonCreatorQuestion': 'Criar indivíduos',
+            'ReplicationQuestion': 'Pergunta de Repetição',
+            'ReplicableItemQuestion': 'Pergunta Item de Repetição',
+            'MediaQuestion': 'Exibir Mídia'
+        };
+
         let logs = [];
         const log = (message) => {
             console.log(message);
@@ -1482,18 +1590,21 @@ class QuestionnaireUI {
                     }
                     
                     if (questions.length === 0) {
-                        throw new Error('Bloco não tem perguntas');
+                        throw new Error(`O bloco \"${blockTitle}\" não tem perguntas`);
                     }
 
                     questions.forEach((q, qIndex) => {
+                        const questionId = q.id || `índice: ${qIndex + 1}`; // Usar índice se ID não existir
+                        const friendlyType = questionTypeMap[q.type] || q.type; // Obter nome amigável
+
                         if (!q || typeof q !== 'object') {
-                            throw new Error(`Pergunta não é um objeto válido (ID: ${q.id || 'não definido'})`);
+                            throw new Error(`Pergunta não é um objeto válido (ID: ${questionId})`);
                         }
                         
                         // Campos obrigatórios
-                        if (!q.id) throw new Error(`Pergunta não tem ID (índice: ${qIndex + 1})`);
-                        if (!q.title) throw new Error(`Pergunta não tem título (ID: ${q.id})`);
-                        if (!q.type) throw new Error(`Pergunta não tem tipo (ID: ${q.id})`);
+                        if (!q.id) throw new Error(`Pergunta não tem ID (Tipo: ${friendlyType}, índice: ${qIndex + 1})`);
+                        if (!q.title) throw new Error(`Pergunta não tem título (ID: ${questionId}, Tipo: ${friendlyType})`);
+                        if (!q.type) throw new Error(`Pergunta não tem tipo (ID: ${questionId})`);
                         
                         // Validação específica por tipo
                         switch (q.type) {
@@ -1501,14 +1612,14 @@ class QuestionnaireUI {
                             case 'MultipleChoiceQuestion':
                                 const options = Object.keys(q).filter(key => key.startsWith('Op') && key !== 'OpOther');
                                 if (options.length === 0) {
-                                    throw new Error(`Pergunta não tem opções (ID: ${q.id})`);
+                                    throw new Error(`Pergunta \"${q.title}\" (ID: ${questionId}, Tipo: ${friendlyType}) não tem opções.`);
                                 }
                                 break;
                         }
                     });
                 });
             } catch (error) {
-                this.showError(error.message);
+                this.showError(`Validação falhou: ${error.message}`);
                 return false;
             }
             
@@ -1601,25 +1712,10 @@ class QuestionnaireUI {
 
         // Montar a mensagem
         errorDiv.appendChild(errorContent);
-        errorDiv.appendChild(logsContainer);
         errorDiv.appendChild(closeButton);
 
         // Adicionar ao DOM
         document.body.appendChild(errorDiv);
-
-        // Atualizar os logs a cada 100ms para dar tempo de ler
-        let currentLogIndex = 0;
-        const logs = message.split('\n');
-        
-        const updateLogs = () => {
-            if (currentLogIndex < logs.length) {
-                logsContainer.textContent = logs.slice(0, currentLogIndex + 1).join('\n');
-                currentLogIndex++;
-                setTimeout(updateLogs, 100);
-            }
-        };
-        
-        updateLogs();
     }
 
     showSuccess(message) {
@@ -1726,6 +1822,102 @@ class QuestionnaireUI {
                 this.render();
                 this.showSuccess('Bloco excluído com sucesso!');
             }
+            removeModal();
+        });
+    }
+
+    editQuestion(questionId) {
+        if (!this.currentBlockId) return;
+        const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+        if (!block) return;
+
+        const question = block.questions.find(q => q.id === questionId);
+        if (question) {
+            this.currentQuestionId = questionId;
+            this.showQuestionForm(question);
+        }
+    }
+
+    deleteQuestion(questionId) {
+        if (!this.currentBlockId) return;
+        const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+        if (!block) return;
+
+        const question = block.questions.find(q => q.id === questionId);
+        if (!question) return;
+
+        // Modal de confirmação para exclusão de pergunta
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.display = 'flex';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        modal.style.zIndex = '1000';
+
+        const modalContent = document.createElement('div');
+        modalContent.style.backgroundColor = 'white';
+        modalContent.style.padding = '20px';
+        modalContent.style.borderRadius = '8px';
+        modalContent.style.maxWidth = '400px';
+        modalContent.style.width = '100%';
+
+        const title = document.createElement('h3');
+        title.textContent = 'Confirmar Exclusão de Pergunta';
+        title.style.marginBottom = '15px';
+        title.style.color = '#dc3545';
+
+        const message = document.createElement('p');
+        message.textContent = `Tem certeza que deseja excluir a pergunta "${question.title}"? Esta ação não pode ser desfeita.`;
+        message.style.marginBottom = '20px';
+
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.gap = '10px';
+        buttonContainer.style.justifyContent = 'flex-end';
+
+        const cancelButton = document.createElement('button');
+        cancelButton.textContent = 'Cancelar';
+        cancelButton.style.padding = '8px 16px';
+        cancelButton.style.backgroundColor = '#6c757d';
+        cancelButton.style.color = 'white';
+        cancelButton.style.border = 'none';
+        cancelButton.style.borderRadius = '4px';
+        cancelButton.style.cursor = 'pointer';
+
+        const confirmButton = document.createElement('button');
+        confirmButton.textContent = 'Excluir';
+        confirmButton.style.padding = '8px 16px';
+        confirmButton.style.backgroundColor = '#dc3545';
+        confirmButton.style.color = 'white';
+        confirmButton.style.border = 'none';
+        confirmButton.style.borderRadius = '4px';
+        confirmButton.style.cursor = 'pointer';
+
+        buttonContainer.appendChild(cancelButton);
+        buttonContainer.appendChild(confirmButton);
+
+        modalContent.appendChild(title);
+        modalContent.appendChild(message);
+        modalContent.appendChild(buttonContainer);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        const removeModal = () => {
+            document.body.removeChild(modal);
+        };
+
+        cancelButton.addEventListener('click', removeModal);
+        confirmButton.addEventListener('click', () => {
+            block.questions = block.questions.filter(q => q.id !== questionId);
+            block.saveVersion('Exclusão de pergunta');
+            this.render();
+            this.showSuccess('Pergunta excluída com sucesso!');
             removeModal();
         });
     }
