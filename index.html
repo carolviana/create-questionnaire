@@ -95,8 +95,8 @@
                     <div class="blocks-header-left">
                         <h3>Blocos</h3>
                         <div class="blocks-stats">
-                            <span id="totalBlocks">0 blocos</span>
-                            <span id="totalQuestions">0 perguntas</span>
+                            <span>Blocos: <span id="totalBlocks">0</span></span>
+                            <span>Perguntas: <span id="totalQuestions">0</span></span>
                         </div>
                     </div>
                     <div class="blocks-header-right">
@@ -128,26 +128,20 @@
             <div id="blockEditor" class="block-editor hidden">
                 <div class="block-header">
                     <div class="block-header-left">
-                        <div class="form-group">
-                            <label for="blockTitle">Título do Bloco</label>
-                            <input type="text" id="blockTitle" placeholder="Digite o título do bloco">
+                        <div class="block-title">
+                            <input type="text" id="blockTitle" placeholder="Título do Bloco" class="form-control">
                         </div>
-                        <div class="block-meta">
-                            <span class="block-color">
-                                <i class="fas fa-palette"></i>
-                                <div class="color-picker">
-                                    <button type="button" class="color-btn" data-color="#ffffff" style="background-color: #ffffff" title="Branco"></button>
-                                    <button type="button" class="color-btn" data-color="#fecaca" style="background-color: #fecaca" title="Rosa Claro"></button>
-                                    <button type="button" class="color-btn" data-color="#fef08a" style="background-color: #fef08a" title="Amarelo Claro"></button>
-                                    <button type="button" class="color-btn" data-color="#bbf7d0" style="background-color: #bbf7d0" title="Verde Claro"></button>
-                                    <button type="button" class="color-btn" data-color="#bfdbfe" style="background-color: #bfdbfe" title="Azul Claro"></button>
-                                    <button type="button" class="color-btn" data-color="#e9d5ff" style="background-color: #e9d5ff" title="Roxo Claro"></button>
-                                    <button type="button" class="color-btn" data-color="#fde68a" style="background-color: #fde68a" title="Âmbar Claro"></button>
-                                    <button type="button" class="color-btn" data-color="#a5f3fc" style="background-color: #a5f3fc" title="Ciano Claro"></button>
-                                    <button type="button" class="color-btn" data-color="#fae8ff" style="background-color: #fae8ff" title="Lavanda"></button>
-                                    <button type="button" class="color-btn" data-color="#f3e8ff" style="background-color: #f3e8ff" title="Violeta Claro"></button>
-                                </div>
-                            </span>
+                        <div class="block-color">
+                            <button type="button" class="color-btn" data-color="#ffffff" style="background-color: #ffffff" title="Branco"></button>
+                            <button type="button" class="color-btn" data-color="#fecaca" style="background-color: #fecaca" title="Rosa Claro"></button>
+                            <button type="button" class="color-btn" data-color="#fef08a" style="background-color: #fef08a" title="Amarelo Claro"></button>
+                            <button type="button" class="color-btn" data-color="#bbf7d0" style="background-color: #bbf7d0" title="Verde Claro"></button>
+                            <button type="button" class="color-btn" data-color="#bfdbfe" style="background-color: #bfdbfe" title="Azul Claro"></button>
+                            <button type="button" class="color-btn" data-color="#e9d5ff" style="background-color: #e9d5ff" title="Roxo Claro"></button>
+                            <button type="button" class="color-btn" data-color="#fde68a" style="background-color: #fde68a" title="Âmbar Claro"></button>
+                            <button type="button" class="color-btn" data-color="#a5f3fc" style="background-color: #a5f3fc" title="Ciano Claro"></button>
+                            <button type="button" class="color-btn" data-color="#fae8ff" style="background-color: #fae8ff" title="Lavanda"></button>
+                            <button type="button" class="color-btn" data-color="#f3e8ff" style="background-color: #f3e8ff" title="Violeta Claro"></button>
                         </div>
                     </div>
                     <div class="block-header-right">

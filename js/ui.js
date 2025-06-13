@@ -310,6 +310,14 @@ class QuestionnaireUI {
         const div = document.createElement('div');
         div.className = `tree-item question-item ${question.id === this.currentQuestionId ? 'editing-question' : ''}`;
         div.dataset.questionId = question.id;
+        div.draggable = true;
+
+        // Adiciona os event listeners de drag and drop
+        div.addEventListener('dragstart', (e) => this.handleQuestionDragStart(e));
+        div.addEventListener('dragend', (e) => this.handleQuestionDragEnd(e));
+        div.addEventListener('dragover', (e) => this.handleQuestionDragOver(e));
+        div.addEventListener('drop', (e) => this.handleQuestionDrop(e));
+        div.addEventListener('dragleave', (e) => this.handleQuestionDragLeave(e));
 
         const questionTypeMap = {
             'text': 'Texto',
@@ -338,17 +346,12 @@ class QuestionnaireUI {
         header.className = 'question-item-header';
         header.innerHTML = `
             <div class="question-item-title">
+                <i class="fas fa-grip-vertical"></i>
                 <span class="question-id">${question.id}</span>
                 <span class="question-title">${question.title}</span>
                 <span class="question-type">${questionTypeMap[question.type] || question.type}</span>
             </div>
             <div class="question-item-actions">
-                <button class="move-question-up-btn" title="Mover para cima">
-                    <i class="fas fa-arrow-up"></i>
-                </button>
-                <button class="move-question-down-btn" title="Mover para baixo">
-                    <i class="fas fa-arrow-down"></i>
-                </button>
                 <button class="edit-question-btn" title="Editar pergunta">
                     <i class="fas fa-edit"></i>
                 </button>
@@ -362,31 +365,9 @@ class QuestionnaireUI {
         `;
 
         // Adicionar eventos aos botões
-        const moveUpBtn = header.querySelector('.move-question-up-btn');
-        const moveDownBtn = header.querySelector('.move-question-down-btn');
         const editBtn = header.querySelector('.edit-question-btn');
         const deleteBtn = header.querySelector('.delete-question-btn');
         const toggleBtn = header.querySelector('.toggle-question-btn');
-
-        moveUpBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (this.currentBlockId) {
-                const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
-                if (block && block.moveQuestionUp(question.id)) {
-                    this.render();
-                }
-            }
-        });
-
-        moveDownBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (this.currentBlockId) {
-                const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
-                if (block && block.moveQuestionDown(question.id)) {
-                    this.render();
-                }
-            }
-        });
 
         editBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -431,6 +412,86 @@ class QuestionnaireUI {
 
         div.appendChild(content);
         return div;
+    }
+
+    handleQuestionDragStart(e) {
+        const questionItem = e.target.closest('.question-item');
+        if (!questionItem) return;
+
+        e.dataTransfer.setData('text/plain', questionItem.dataset.questionId);
+        questionItem.classList.add('dragging');
+    }
+
+    handleQuestionDragOver(e) {
+        e.preventDefault();
+        const questionItem = e.target.closest('.question-item');
+        if (!questionItem) return;
+
+        const draggingItem = document.querySelector('.question-item.dragging');
+        if (!draggingItem) return;
+
+        const rect = questionItem.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+
+        if (e.clientY < midY) {
+            questionItem.style.borderTop = '2px solid #0d6efd';
+            questionItem.style.borderBottom = '';
+        } else {
+            questionItem.style.borderBottom = '2px solid #0d6efd';
+            questionItem.style.borderTop = '';
+        }
+    }
+
+    handleQuestionDragLeave(e) {
+        const questionItem = e.target.closest('.question-item');
+        if (!questionItem) return;
+
+        questionItem.style.borderTop = '';
+        questionItem.style.borderBottom = '';
+    }
+
+    handleQuestionDragEnd(e) {
+        const questionItem = e.target.closest('.question-item');
+        if (!questionItem) return;
+
+        questionItem.classList.remove('dragging');
+        document.querySelectorAll('.question-item').forEach(item => {
+            item.style.borderTop = '';
+            item.style.borderBottom = '';
+        });
+    }
+
+    handleQuestionDrop(e) {
+        e.preventDefault();
+        const questionItem = e.target.closest('.question-item');
+        if (!questionItem) return;
+
+        const sourceId = e.dataTransfer.getData('text/plain');
+        const targetId = questionItem.dataset.questionId;
+
+        if (sourceId === targetId) return;
+
+        const rect = questionItem.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const insertAfter = e.clientY > midY;
+
+        if (this.currentBlockId) {
+            const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+            if (!block) return;
+
+            const sourceIndex = block.questions.findIndex(q => q.id === sourceId);
+            const targetIndex = block.questions.findIndex(q => q.id === targetId);
+            
+            if (sourceIndex === -1 || targetIndex === -1) return;
+
+            const question = block.questions[sourceIndex];
+            block.questions.splice(sourceIndex, 1);
+            
+            const newIndex = insertAfter ? targetIndex + 1 : targetIndex;
+            block.questions.splice(newIndex, 0, question);
+
+            this.render();
+        }
     }
 
     // Novo método para lidar com a expansão/recolhimento da pergunta
