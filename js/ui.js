@@ -35,6 +35,8 @@ class QuestionnaireUI {
         this.blockHistoryBtn = document.getElementById('blockHistoryBtn');
         this.saveBlockBtn = document.getElementById('saveBlockBtn');
         this.deleteBlockBtn = document.getElementById('deleteBlockBtn');
+        this.expandAllQuestionsBtn = document.getElementById('expandAllQuestionsBtn');
+        this.collapseAllQuestionsBtn = document.getElementById('collapseAllQuestionsBtn');
 
         // Questions
         this.questionsList = document.getElementById('questionsList');
@@ -134,6 +136,12 @@ class QuestionnaireUI {
         }
         if (this.deleteBlockBtn) {
             this.deleteBlockBtn.addEventListener('click', () => this.deleteBlock());
+        }
+        if (this.expandAllQuestionsBtn) {
+            this.expandAllQuestionsBtn.addEventListener('click', () => this.expandAllQuestions());
+        }
+        if (this.collapseAllQuestionsBtn) {
+            this.collapseAllQuestionsBtn.addEventListener('click', () => this.collapseAllQuestions());
         }
 
         // Questions
@@ -2249,5 +2257,31 @@ class QuestionnaireUI {
         }
 
         return details;
+    }
+
+    expandAllQuestions() {
+        if (!this.currentBlockId) return;
+
+        const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+        if (!block) return;
+
+        block.questions.forEach(question => {
+            question.isExpanded = true;
+        });
+
+        this.renderQuestions();
+    }
+
+    collapseAllQuestions() {
+        if (!this.currentBlockId) return;
+
+        const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+        if (!block) return;
+
+        block.questions.forEach(question => {
+            question.isExpanded = false;
+        });
+
+        this.renderQuestions();
     }
 }
