@@ -89,7 +89,29 @@ class Block {
 
     addQuestion(question) {
         this.questions.push(question);
-        this.updatedAt = new Date();
+        this.saveVersion('Adição de pergunta');
+    }
+
+    moveQuestionUp(questionId) {
+        const index = this.questions.findIndex(q => q.id === questionId);
+        if (index > 0) {
+            // Troca a pergunta com a anterior
+            [this.questions[index - 1], this.questions[index]] = [this.questions[index], this.questions[index - 1]];
+            this.saveVersion('Reordenação de pergunta para cima');
+            return true;
+        }
+        return false;
+    }
+
+    moveQuestionDown(questionId) {
+        const index = this.questions.findIndex(q => q.id === questionId);
+        if (index < this.questions.length - 1) {
+            // Troca a pergunta com a próxima
+            [this.questions[index], this.questions[index + 1]] = [this.questions[index + 1], this.questions[index]];
+            this.saveVersion('Reordenação de pergunta para baixo');
+            return true;
+        }
+        return false;
     }
 
     removeQuestion(questionId) {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criador de Questionários</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -45,14 +45,14 @@
                 <div class="import-options hidden">
                     <div class="import-section">
                         <h4>Importar Questionário</h4>
-                        <div class="file-input-container">
-                            <input type="file" id="importFile" accept=".json" class="file-input">
+                        <label class="file-input-container">
+                            <input type="file" id="importQuestionnaireFile" accept=".json" class="file-input">
                             <div class="file-input-message">
                                 <i class="fas fa-file-import"></i>
                                 <span>Arraste um arquivo ou clique para selecionar</span>
                                 <small>Formatos suportados: eQuest2 e eQuest3</small>
                             </div>
-                        </div>
+                        </label>
                         <div class="import-format-selector">
                             <label>Formato do arquivo:</label>
                             <div class="radio-group">
@@ -93,26 +93,28 @@
             <div class="blocks-container">
                 <div class="blocks-header">
                     <div class="blocks-header-left">
-                        <h2>Blocos de Perguntas</h2>
+                        <h3>Blocos</h3>
                         <div class="blocks-stats">
-                            <span class="stat-item">
-                                <i class="fas fa-layer-group"></i>
-                                <span id="totalBlocks">0</span> blocos
-                            </span>
-                            <span class="stat-item">
-                                <i class="fas fa-question-circle"></i>
-                                <span id="totalQuestions">0</span> perguntas
-                            </span>
+                            <span id="totalBlocks">0 blocos</span>
+                            <span id="totalQuestions">0 perguntas</span>
                         </div>
                     </div>
                     <div class="blocks-header-right">
-                        <button id="importBlockBtn" class="btn btn-secondary">
-                            <i class="fas fa-file-import"></i>
-                            Importar Bloco
-                        </button>
+                        <div class="reorder-controls">
+                            <button id="moveBlockUpBtn" title="Mover para cima">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                            <button id="moveBlockDownBtn" title="Mover para baixo">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
                         <button id="addBlockBtn" class="btn btn-primary">
                             <i class="fas fa-plus"></i>
                             Novo Bloco
+                        </button>
+                        <button id="importBlockBtn" class="btn btn-secondary">
+                            <i class="fas fa-file-import"></i>
+                            Importar Bloco
                         </button>
                     </div>
                 </div>
@@ -120,16 +122,6 @@
                 <!-- Árvore de Blocos -->
                 <div id="blocksTree" class="blocks-tree">
                     <!-- Blocos serão adicionados aqui dinamicamente -->
-                </div>
-
-                <!-- Reorder Controls -->
-                <div class="reorder-controls">
-                    <button id="moveBlockUpBtn" title="Mover para cima">
-                        <i class="fas fa-chevron-up"></i>
-                    </button>
-                    <button id="moveBlockDownBtn" title="Mover para baixo">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
                 </div>
             </div>
 
@@ -355,15 +347,15 @@
                 <div class="modal-body">
                     <div class="import-form">
                         <div class="form-group">
-                            <label for="importFile">Selecione os arquivos JSON</label>
-                            <div class="file-input-container">
-                                <input type="file" id="importFile" accept=".json" class="file-input" multiple>
+                            <label>Selecione os arquivos JSON</label>
+                            <label class="file-input-container">
+                                <input type="file" id="importBlockFile" accept=".json" class="file-input" multiple>
                                 <div class="file-input-message">
                                     <i class="fas fa-file-import"></i>
                                     <span>Arraste arquivos ou clique para selecionar</span>
                                     <small>Você pode selecionar múltiplos arquivos</small>
                                 </div>
-                            </div>
+                            </label>
                         </div>
 
                         <div class="selected-files">
@@ -430,7 +422,6 @@
             </div>
         </div>
     </div>
-
     <script src="js/models.js"></script>
     <script src="js/questionnaire.js"></script>
     <script src="js/ui.js"></script>

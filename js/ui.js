@@ -266,7 +266,7 @@ class QuestionnaireUI {
 
     createBlockElement(block) {
         const div = document.createElement('div');
-        div.className = `tree-item ${block.id === this.currentBlockId ? 'selected' : ''}`;
+        div.className = `block-item ${block.id === this.currentBlockId ? 'active' : ''}`;
         div.draggable = true;
         div.dataset.blockId = block.id;
         div.style.backgroundColor = this.getLightColor(block.color);
@@ -278,18 +278,21 @@ class QuestionnaireUI {
         div.addEventListener('drop', (e) => this.handleDrop(e));
         div.addEventListener('dragleave', (e) => this.handleDragLeave(e));
 
-        const header = document.createElement('div');
-        header.className = 'tree-item-header';
-
-        const title = document.createElement('div');
-        title.className = 'tree-item-title';
-        title.innerHTML = `
-            <span>${block.title}</span>
-            <span class="question-count">${block.questions.length} perguntas</span>
+        div.innerHTML = `
+            <i class="fas fa-grip-vertical"></i>
+            <div class="block-title">
+                <span>${block.title}</span>
+                <span class="question-count">${block.questions.length} perguntas</span>
+            </div>
+            <div class="block-actions">
+                <button class="edit-block-btn" title="Editar bloco">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="delete-block-btn" title="Excluir bloco">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
         `;
-
-        header.appendChild(title);
-        div.appendChild(header);
 
         return div;
     }
@@ -301,123 +304,138 @@ class QuestionnaireUI {
         div.dataset.questionId = question.id;
 
         const questionTypeMap = {
-            'NotAnswerableQuestion': 'Exibir Texto',
-            'EditQuestion': 'Pergunta Texto',
-            'OnlyOneChoiceQuestion': 'Múltipla Escolha (Resposta Única)',
-            'MultipleChoiceQuestion': 'Múltipla Escolha (Respostas Múltiplas)',
-            'GeoLocationQuestion': 'Localização Geográfica',
-            'PearsonCreatorQuestion': 'Criar indivíduos',
-            'ReplicationQuestion': 'Pergunta de Repetição',
-            'ReplicableItemQuestion': 'Pergunta Item de Repetição',
-            'MediaQuestion': 'Exibir Mídia'
+            'text': 'Texto',
+            'number': 'Número',
+            'date': 'Data',
+            'select': 'Seleção',
+            'multiselect': 'Múltipla Escolha',
+            'radio': 'Escolha Única',
+            'checkbox': 'Caixas de Seleção',
+            'scale': 'Escala',
+            'matrix': 'Matriz',
+            'ranking': 'Ranking',
+            'file': 'Arquivo',
+            'image': 'Imagem',
+            'signature': 'Assinatura',
+            'location': 'Localização',
+            'contact': 'Contato',
+            'payment': 'Pagamento',
+            'calculation': 'Cálculo',
+            'hidden': 'Oculta',
+            'section': 'Seção',
+            'page': 'Página'
         };
-
-        const friendlyType = questionTypeMap[question.type] || question.type;
 
         const header = document.createElement('div');
         header.className = 'question-item-header';
         header.innerHTML = `
-            <span class="question-id">${question.id}</span>
-            <div class="question-title-text">
-                ${question.title} <span class="question-type-display">(${friendlyType})</span>
+            <div class="question-item-title">
+                <span class="question-id">${question.id}</span>
+                <span class="question-title">${question.title}</span>
+                <span class="question-type">${questionTypeMap[question.type] || question.type}</span>
             </div>
-            <div class="question-actions">
-                <button class="btn btn-icon btn-secondary edit-question-btn" title="Editar Pergunta" data-question-id="${question.id}">
+            <div class="question-item-actions">
+                <button class="move-question-up-btn" title="Mover para cima">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button class="move-question-down-btn" title="Mover para baixo">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button class="edit-question-btn" title="Editar pergunta">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-icon btn-danger delete-question-btn" title="Excluir Pergunta" data-question-id="${question.id}">
+                <button class="delete-question-btn" title="Excluir pergunta">
                     <i class="fas fa-trash"></i>
                 </button>
-                <button class="btn btn-icon toggle-question-btn" title="Expandir/Colapsar">
-                    <i class="fas ${question.isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}"></i>
+                <button class="toggle-question-btn" title="Expandir/Recolher">
+                    <i class="fas fa-chevron-${question.isExpanded ? 'up' : 'down'}"></i>
                 </button>
             </div>
         `;
+
+        // Adicionar eventos aos botões
+        const moveUpBtn = header.querySelector('.move-question-up-btn');
+        const moveDownBtn = header.querySelector('.move-question-down-btn');
+        const editBtn = header.querySelector('.edit-question-btn');
+        const deleteBtn = header.querySelector('.delete-question-btn');
+        const toggleBtn = header.querySelector('.toggle-question-btn');
+
+        moveUpBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.currentBlockId) {
+                const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+                if (block && block.moveQuestionUp(question.id)) {
+                    this.render();
+                }
+            }
+        });
+
+        moveDownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.currentBlockId) {
+                const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+                if (block && block.moveQuestionDown(question.id)) {
+                    this.render();
+                }
+            }
+        });
+
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showQuestionForm(question);
+        });
+
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm('Tem certeza que deseja excluir esta pergunta?')) {
+                if (this.currentBlockId) {
+                    const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+                    if (block) {
+                        block.removeQuestion(question.id);
+                        this.render();
+                    }
+                }
+            }
+        });
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleQuestion(question, div);
+        });
+
+        // Adicionar evento de clique no header para expandir/recolher
+        header.addEventListener('click', (e) => {
+            // Verifica se o clique não foi em nenhum dos botões de ação
+            if (!e.target.closest('.question-item-actions')) {
+                this.toggleQuestion(question, div);
+            }
+        });
+
+        div.appendChild(header);
 
         const content = document.createElement('div');
         content.className = `question-item-content ${question.isExpanded ? '' : 'hidden'}`;
         content.innerHTML = `
-            <div class="question-detail"><strong>Tipo:</strong> ${friendlyType}</div>
-            ${question.behavior ? `<div class="question-detail"><strong>Comportamento:</strong> ${question.behavior}</div>` : ''}
-            ${question.media ? `<div class="question-detail"><strong>Mídia:</strong> <a href="${question.media}" target="_blank">${question.media}</a></div>` : ''}
-            ${question.OpOther ? `<div class="question-detail"><strong>Outra Opção:</strong> ${question.OpOther}</div>` : ''}
-            ${question.size ? `<div class="question-detail"><strong>Tamanho:</strong> ${question.size}</div>` : ''}
-            ${question.reference ? `<div class="question-detail"><strong>Referência:</strong> ${question.reference}</div>` : ''}
-            ${question.replication ? `<div class="question-detail"><strong>Replicação:</strong> ${question.replication}</div>` : ''}
-            ${question.allowOnlyNumbers ? `<div class="question-detail"><strong>Permite Apenas Números:</strong> Sim</div>` : ''}
-            ${question.showDontKnow ? `<div class="question-detail"><strong>Mostrar "Não sei":</strong> Sim</div>` : ''}
-            ${question.showDontAnswer ? `<div class="question-detail"><strong>Mostrar "Não responder":</strong> Sim</div>` : ''}
-            ${question.showDontApply ? `<div class="question-detail"><strong>Mostrar "Não se aplica":</strong> Sim</div>` : ''}
-            
-            ${question.Options && Object.keys(question.Options).length > 0 ? `
-                <div class="question-detail"><strong>Opções:</strong>
-                    <ul>
-                        ${Object.entries(question.Options).map(([key, value]) => `<li>${key}: ${value}</li>`).join('')}
-                    </ul>
-                </div>` : ''}
-
-            ${question.dependencies && question.dependencies.length > 0 ? `
-                <div class="question-detail"><strong>Dependências:</strong>
-                    <ul>
-                        ${question.dependencies.map(dep => `<li>ID: ${dep.dependencyID}, Valor: ${dep.dependencyValue}${dep.operator ? `, Operador: ${dep.operator}` : ''}</li>`).join('')}
-                    </ul>
-                </div>` : ''}
+            <div class="question-item-details">
+                ${this.renderQuestionDetails(question)}
+            </div>
         `;
 
-        div.appendChild(header);
         div.appendChild(content);
-
-        // Event listener para o cabeçalho para expandir/colapsar
-        header.addEventListener('click', (e) => {
-            // Evita que o clique nos botões de ação ou no próprio toggle button expanda/colapse
-            if (e.target.closest('.edit-question-btn') || e.target.closest('.delete-question-btn') || e.target.closest('.toggle-question-btn')) {
-                return;
-            }
-            question.isExpanded = !question.isExpanded;
-            content.classList.toggle('hidden');
-            const icon = header.querySelector('.toggle-question-btn i');
-            if (content.classList.contains('hidden')) {
-                icon.className = 'fas fa-chevron-down';
-            } else {
-                icon.className = 'fas fa-chevron-up';
-            }
-        });
-
-        // Event listener específico para o botão de toggle
-        header.querySelector('.toggle-question-btn').addEventListener('click', (e) => {
-            e.stopPropagation(); // Impede que o clique no botão de toggle propague para o cabeçalho
-            question.isExpanded = !question.isExpanded;
-            content.classList.toggle('hidden');
-            const icon = header.querySelector('.toggle-question-btn i');
-            if (content.classList.contains('hidden')) {
-                icon.className = 'fas fa-chevron-down';
-            } else {
-                icon.className = 'fas fa-chevron-up';
-            }
-        });
-
-        // Event listeners para os botões de ação
-        const editBtn = header.querySelector('.edit-question-btn');
-        if (editBtn) {
-            editBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Evita que o clique propague para o toggle
-                console.log(`[UI] Botão Editar clicado para a pergunta ID: ${e.currentTarget.dataset.questionId}`);
-                this.editQuestion(e.currentTarget.dataset.questionId);
-            });
-            console.log(`[UI] Event listener de edição anexado para a pergunta ID: ${question.id}`);
-        }
-
-        const deleteBtn = header.querySelector('.delete-question-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Evita que o clique propague para o toggle
-                console.log(`[UI] Botão Excluir clicado para a pergunta ID: ${e.currentTarget.dataset.questionId}`);
-                this.deleteQuestion(e.currentTarget.dataset.questionId);
-            });
-            console.log(`[UI] Event listener de exclusão anexado para a pergunta ID: ${question.id}`);
-        }
-
         return div;
+    }
+
+    // Novo método para lidar com a expansão/recolhimento da pergunta
+    toggleQuestion(question, element) {
+        question.isExpanded = !question.isExpanded;
+        const content = element.querySelector('.question-item-content');
+        if (content) {
+            content.classList.toggle('hidden', !question.isExpanded);
+        }
+        const icon = element.querySelector('.toggle-question-btn i');
+        if (icon) {
+            icon.className = `fas fa-chevron-${question.isExpanded ? 'up' : 'down'}`;
+        }
     }
 
     renderBlockEditor() {
@@ -443,6 +461,26 @@ class QuestionnaireUI {
         this.blockEditor.style.backgroundColor = this.getLightColor(block.color);
 
         // Render questions
+        this.renderQuestions();
+    }
+
+    renderQuestions() {
+        if (!this.currentBlockId) {
+            this.questionsList.innerHTML = '<div class="no-questions">Selecione um bloco para ver suas perguntas</div>';
+            return;
+        }
+
+        const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+        if (!block) {
+            this.questionsList.innerHTML = '<div class="no-questions">Bloco não encontrado</div>';
+            return;
+        }
+
+        if (block.questions.length === 0) {
+            this.questionsList.innerHTML = '<div class="no-questions">Este bloco não possui perguntas</div>';
+            return;
+        }
+
         this.questionsList.innerHTML = '';
         block.questions.forEach(question => {
             const questionElement = this.createQuestionElement(question);
@@ -458,97 +496,112 @@ class QuestionnaireUI {
 
     // Event Handlers
     handleBlockTreeClick(e) {
-        const blockItem = e.target.closest('.tree-item');
+        const blockItem = e.target.closest('.block-item');
         if (!blockItem) return;
 
-        const blockId = blockItem.dataset.blockId;
-        const toggle = e.target.closest('.tree-item-toggle');
+        // Não processa o clique se for em um botão de ação
+        if (e.target.closest('.block-actions')) return;
 
-        if (toggle) {
-            const block = this.questionnaireManager.questionnaire.getBlock(blockId);
-            block.isExpanded = !block.isExpanded;
-            this.renderBlocksTree();
-        } else {
-            this.currentBlockId = blockId;
-            this.updateReorderButtons();
-            this.render();
-        }
+        const blockId = blockItem.dataset.blockId;
+        if (!blockId) return;
+
+        // Seleciona o bloco
+        this.selectBlock(blockId);
+
+        // Atualiza a UI para mostrar o bloco selecionado
+        document.querySelectorAll('.block-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        blockItem.classList.add('active');
+
+        // Mostra o editor do bloco
+        this.blockEditor.classList.remove('hidden');
+        
+        // Renderiza as perguntas do bloco
+        this.renderQuestions();
+
+        // Esconde o formulário de pergunta se estiver visível
+        this.hideQuestionForm();
+
+        // Foca no início do bloco no editor
+        this.blockEditor.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     handleDragStart(e) {
-        const blockItem = e.target.closest('.tree-item');
+        const blockItem = e.target.closest('.block-item');
         if (!blockItem) return;
 
         e.dataTransfer.setData('text/plain', blockItem.dataset.blockId);
         blockItem.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
     }
 
     handleDragOver(e) {
         e.preventDefault();
-        e.stopPropagation();
-        
-        const blockItem = e.target.closest('.tree-item');
+        const blockItem = e.target.closest('.block-item');
         if (!blockItem) return;
 
-        // Remove a classe drag-over de todos os outros elementos
-        document.querySelectorAll('.tree-item').forEach(item => {
-            if (item !== blockItem) {
-                item.classList.remove('drag-over');
-            }
-        });
+        const draggingItem = document.querySelector('.block-item.dragging');
+        if (!draggingItem) return;
 
-        // Adiciona a classe drag-over ao elemento atual
-        blockItem.classList.add('drag-over');
-        e.dataTransfer.dropEffect = 'move';
-    }
-
-    handleDragLeave(e) {
-        const blockItem = e.target.closest('.tree-item');
-        if (!blockItem) return;
-
-        // Verifica se o mouse ainda está sobre o elemento
         const rect = blockItem.getBoundingClientRect();
-        const x = e.clientX;
-        const y = e.clientY;
+        const midY = rect.top + rect.height / 2;
 
-        if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
-            blockItem.classList.remove('drag-over');
+        if (e.clientY < midY) {
+            blockItem.style.borderTop = '2px solid #0d6efd';
+            blockItem.style.borderBottom = '';
+        } else {
+            blockItem.style.borderBottom = '2px solid #0d6efd';
+            blockItem.style.borderTop = '';
         }
     }
 
+    handleDragLeave(e) {
+        const blockItem = e.target.closest('.block-item');
+        if (!blockItem) return;
+
+        blockItem.style.borderTop = '';
+        blockItem.style.borderBottom = '';
+    }
+
     handleDragEnd(e) {
-        // Remove todas as classes de drag and drop
-        document.querySelectorAll('.tree-item').forEach(item => {
-            item.classList.remove('dragging');
-            item.classList.remove('drag-over');
+        const blockItem = e.target.closest('.block-item');
+        if (!blockItem) return;
+
+        blockItem.classList.remove('dragging');
+        document.querySelectorAll('.block-item').forEach(item => {
+            item.style.borderTop = '';
+            item.style.borderBottom = '';
         });
     }
 
     handleDrop(e) {
         e.preventDefault();
-        e.stopPropagation();
-        
-        const blockItem = e.target.closest('.tree-item');
+        const blockItem = e.target.closest('.block-item');
         if (!blockItem) return;
 
-        // Remove a classe drag-over
-        blockItem.classList.remove('drag-over');
-
-        const draggedId = e.dataTransfer.getData('text/plain');
+        const sourceId = e.dataTransfer.getData('text/plain');
         const targetId = blockItem.dataset.blockId;
 
-        // Não faz nada se o bloco for solto no mesmo lugar
-        if (draggedId === targetId) return;
+        if (sourceId === targetId) return;
 
-        const blocks = this.questionnaireManager.questionnaire.blocks;
-        const fromIndex = blocks.findIndex(b => b.id === draggedId);
-        const toIndex = blocks.findIndex(b => b.id === targetId);
+        const rect = blockItem.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const insertAfter = e.clientY > midY;
 
-        if (fromIndex !== -1 && toIndex !== -1) {
-            this.questionnaireManager.questionnaire.moveBlock(fromIndex, toIndex);
-            this.render();
-        }
+        // Reordenar os blocos no questionário
+        const sourceIndex = this.questionnaireManager.questionnaire.blocks.findIndex(b => b.id === sourceId);
+        const targetIndex = this.questionnaireManager.questionnaire.blocks.findIndex(b => b.id === targetId);
+        
+        if (sourceIndex === -1 || targetIndex === -1) return;
+
+        const block = this.questionnaireManager.questionnaire.blocks[sourceIndex];
+        this.questionnaireManager.questionnaire.blocks.splice(sourceIndex, 1);
+        
+        const newIndex = insertAfter ? targetIndex + 1 : targetIndex;
+        this.questionnaireManager.questionnaire.blocks.splice(newIndex, 0, block);
+
+        // Atualizar a UI
+        this.render();
     }
 
     // Actions
@@ -933,76 +986,35 @@ class QuestionnaireUI {
         };
 
         // Adicionar campos baseados no tipo
-        const behavior = document.getElementById('questionBehavior').value;
-        if (behavior) questionData.behavior = behavior;
-
-        const replication = document.getElementById('questionReplication').value;
-        if (replication) questionData.replication = replication;
-
-        const reference = document.getElementById('questionReference').value;
-        if (reference) questionData.reference = reference;
-
-        const size = document.getElementById('questionSize').value;
-        if (size) questionData.size = size;
-
-        const media = document.getElementById('questionMedia').value;
-        if (media) questionData.media = media;
-
-        // Campos específicos por tipo
         switch (type) {
-            case 'OnlyOneChoiceQuestion':
-            case 'MultipleChoiceQuestion':
-                const opOther = document.getElementById('opOther').value;
-                if (opOther) questionData.OpOther = opOther;
-
-                // Opções
+            case 'text':
+                questionData.behavior = document.getElementById('textBehavior').value;
+                break;
+            case 'number':
+                questionData.allowOnlyNumbers = document.getElementById('allowOnlyNumbers').checked;
+                break;
+            case 'select':
+            case 'multiselect':
+            case 'radio':
+            case 'checkbox':
                 const options = {};
-                document.querySelectorAll('#optionsContainer .option-item input').forEach((input, index) => {
-                    if (input.value) {
-                        options[index + 1] = input.value;
+                const optionsList = document.getElementById('optionsList');
+                optionsList.querySelectorAll('.option-item').forEach(item => {
+                    const key = item.querySelector('.option-key').value;
+                    const value = item.querySelector('.option-value').value;
+                    if (key && value) {
+                        options[key] = value;
                     }
                 });
-                if (Object.keys(options).length > 0) {
-                    questionData.Options = options;
-                }
+                questionData.Options = options;
+                questionData.OpOther = document.getElementById('opOther').checked;
                 break;
-
-            case 'EditQuestion':
-            case 'ReplicationQuestion':
-            case 'ReplicableItemQuestion':
-                if (document.getElementById('allowOnlyNumbers').checked) {
-                    questionData.allowOnlyNumbers = true;
-                }
+            case 'media':
+                questionData.media = document.getElementById('mediaUrl').value;
                 break;
-        }
-
-        // Campos "Não mostrar"
-        if (document.getElementById('showDontKnow').checked) questionData.showDontKnow = true;
-        if (document.getElementById('showDontAnswer').checked) questionData.showDontAnswer = true;
-        if (document.getElementById('showDontApply').checked) questionData.showDontApply = true;
-
-        // Dependências
-        const dependencies = [];
-        document.querySelectorAll('#dependenciesContainer .dependency-item').forEach(item => {
-            const dependencyId = item.querySelector('[name="dependencyId"]').value;
-            const dependencyValue = item.querySelector('[name="dependencyValue"]').value;
-            const operator = item.querySelector('[name="operator"]').value;
-            if (dependencyId && dependencyValue) {
-                const dependency = {
-                    dependencyID: dependencyId,
-                    dependencyValue: dependencyValue
-                };
-                if (operator) dependency.operator = operator;
-                dependencies.push(dependency);
-            }
-        });
-        if (dependencies.length > 0) {
-            questionData.dependencies = dependencies;
-        }
-
-        // Tratamento especial para MediaQuestion
-        if (type === 'MediaQuestion') {
-            questionData.behavior = "Tipo de midia não suportado";
+            case 'replication':
+                questionData.replication = document.getElementById('replicationCount').value;
+                break;
         }
 
         if (this.currentQuestionId) {
@@ -1011,7 +1023,7 @@ class QuestionnaireUI {
             if (questionIndex !== -1) {
                 // Preservar o estado isExpanded da pergunta original
                 const originalQuestion = block.questions[questionIndex];
-                questionData.isExpanded = originalQuestion.isExpanded; 
+                questionData.isExpanded = originalQuestion.isExpanded;
                 block.questions[questionIndex] = new Question(questionData);
             }
         } else {
@@ -1293,7 +1305,7 @@ class QuestionnaireUI {
     }
 
     initializeQuestionnaireImport() {
-        const fileInput = document.getElementById('importFile');
+        const fileInput = document.getElementById('importQuestionnaireFile');
         const importBtn = document.getElementById('importBtn');
         const formatRadios = document.querySelectorAll('input[name="importFormat"]');
         const toggleImportBtn = document.getElementById('toggleImportBtn');
@@ -1329,7 +1341,7 @@ class QuestionnaireUI {
     }
 
     updateImportButton() {
-        const fileInput = document.getElementById('importFile');
+        const fileInput = document.getElementById('importQuestionnaireFile');
         const importBtn = document.getElementById('importBtn');
         const formatSelect = document.querySelector('input[name="importFormat"]:checked');
         
@@ -1347,7 +1359,7 @@ class QuestionnaireUI {
 
         log('=== INÍCIO DA IMPORTAÇÃO ===');
 
-        const fileInput = document.getElementById('importFile');
+        const fileInput = document.getElementById('importQuestionnaireFile');
         const formatSelect = document.querySelector('input[name="importFormat"]:checked');
         
         if (!fileInput || !formatSelect) {
@@ -1439,7 +1451,7 @@ class QuestionnaireUI {
                 const appendButton = document.createElement('button');
                 appendButton.textContent = 'Adicionar ao final';
                 appendButton.style.padding = '8px 16px';
-                appendButton.style.backgroundColor = '#007bff';
+                appendButton.style.backgroundColor = '#0d6efd';
                 appendButton.style.color = 'white';
                 appendButton.style.border = 'none';
                 appendButton.style.borderRadius = '4px';
@@ -1463,9 +1475,9 @@ class QuestionnaireUI {
                 cancelButton.style.borderRadius = '4px';
                 cancelButton.style.cursor = 'pointer';
 
-                buttonContainer.appendChild(cancelButton);
                 buttonContainer.appendChild(appendButton);
                 buttonContainer.appendChild(replaceButton);
+                buttonContainer.appendChild(cancelButton);
 
                 modalContent.appendChild(title);
                 modalContent.appendChild(message);
@@ -1473,12 +1485,10 @@ class QuestionnaireUI {
                 modal.appendChild(modalContent);
                 document.body.appendChild(modal);
 
-                // Função para remover o modal
                 const removeModal = () => {
                     document.body.removeChild(modal);
                 };
 
-                // Event listeners para os botões
                 appendButton.addEventListener('click', () => {
                     removeModal();
                     this.importBlocks(data, format, false);
@@ -1572,7 +1582,60 @@ class QuestionnaireUI {
                 });
             });
         } else if (format.toLowerCase() === 'equest3') {
-            // ... código existente para eQuest3 ...
+            // Para eQuest3, atualizar metadados do questionário
+            window.questionnaireManager.questionnaire.title = data.title;
+            window.questionnaireManager.questionnaire.description = data.description;
+            window.questionnaireManager.questionnaire.questionnaireVersion = data.questionnaireVersion;
+
+            // Importar blocos
+            data.blocks.forEach(blockData => {
+                // Criar o bloco e obter seu índice
+                const blockIndex = window.questionnaireManager.addBlock(blockData.title);
+                
+                // Obter o bloco usando o índice
+                const block = window.questionnaireManager.questionnaire.blocks[blockIndex];
+                if (!block) {
+                    this.showError('Erro ao criar bloco: ' + blockData.title);
+                    return;
+                }
+
+                // Importar perguntas
+                blockData.questions.forEach(q => {
+                    // Criar objeto base da pergunta
+                    const question = {
+                        id: q.id,
+                        title: q.title,
+                        type: q.type
+                    };
+
+                    // Adicionar campos opcionais apenas se existirem
+                    if (q.behavior) question.behavior = q.behavior;
+                    if (q.media) question.media = q.media;
+                    if (q.size) question.size = q.size;
+                    if (q.reference) question.reference = q.reference;
+                    if (q.replication) question.replication = q.replication;
+                    if (q.OpOther) question.OpOther = q.OpOther;
+                    
+                    // Campos booleanos
+                    if (q.allowOnlyNumbers) question.allowOnlyNumbers = true;
+                    if (q.showDontKnow) question.showDontKnow = true;
+                    if (q.showDontAnswer) question.showDontAnswer = true;
+                    if (q.showDontApply) question.showDontApply = true;
+
+                    // Opções
+                    if (q.Options && Object.keys(q.Options).length > 0) {
+                        question.Options = q.Options;
+                    }
+
+                    // Dependências
+                    if (q.dependencies && Array.isArray(q.dependencies)) {
+                        question.dependencies = q.dependencies;
+                    }
+                    
+                    // Adicionar a pergunta diretamente ao bloco
+                    block.addQuestion(new Question(question));
+                });
+            });
         }
 
         // Atualizar UI
@@ -1583,7 +1646,7 @@ class QuestionnaireUI {
         this.showSuccess('Questionário importado com sucesso!');
         
         // Limpar o input de arquivo
-        const fileInput = document.getElementById('importFile');
+        const fileInput = document.getElementById('importQuestionnaireFile');
         if (fileInput) {
             fileInput.value = '';
         }
@@ -1692,14 +1755,50 @@ class QuestionnaireUI {
                 return false;
             }
             
-            const isValid = Array.isArray(data.blocks) && data.blocks.every(block => 
-                block.title && Array.isArray(block.questions)
-            );
-            
-            if (!isValid) {
-                this.showError('Formato eQuest3 inválido');
+            try {
+                if (!Array.isArray(data.blocks)) {
+                    throw new Error('Blocos não são um array');
+                }
+
+                data.blocks.forEach((block, blockIndex) => {
+                    if (!block.title) {
+                        throw new Error(`Bloco ${blockIndex + 1} não tem título`);
+                    }
+
+                    if (!Array.isArray(block.questions)) {
+                        throw new Error(`Bloco "${block.title}" não tem array de perguntas`);
+                    }
+
+                    block.questions.forEach((q, qIndex) => {
+                        const questionId = q.id || `índice: ${qIndex + 1}`;
+                        const friendlyType = questionTypeMap[q.type] || q.type;
+
+                        if (!q || typeof q !== 'object') {
+                            throw new Error(`Pergunta não é um objeto válido (ID: ${questionId})`);
+                        }
+
+                        // Campos obrigatórios
+                        if (!q.id) throw new Error(`Pergunta não tem ID (Tipo: ${friendlyType}, índice: ${qIndex + 1})`);
+                        if (!q.title) throw new Error(`Pergunta não tem título (ID: ${questionId}, Tipo: ${friendlyType})`);
+                        if (!q.type) throw new Error(`Pergunta não tem tipo (ID: ${questionId})`);
+
+                        // Validação específica por tipo
+                        switch (q.type) {
+                            case 'OnlyOneChoiceQuestion':
+                            case 'MultipleChoiceQuestion':
+                                if (!q.Options || Object.keys(q.Options).length === 0) {
+                                    throw new Error(`Pergunta "${q.title}" (ID: ${questionId}, Tipo: ${friendlyType}) não tem opções.`);
+                                }
+                                break;
+                        }
+                    });
+                });
+            } catch (error) {
+                this.showError(`Validação falhou: ${error.message}`);
+                return false;
             }
-            return isValid;
+            
+            return true;
         }
 
         this.showError('Formato não reconhecido. Formatos aceitos: eQuest2, eQuest3');
@@ -1982,5 +2081,173 @@ class QuestionnaireUI {
             this.showSuccess('Pergunta excluída com sucesso!');
             removeModal();
         });
+    }
+
+    selectBlock(blockId) {
+        console.log('[UI] Selecionando bloco:', blockId);
+        this.currentBlockId = blockId;
+        
+        // Atualizar a UI para mostrar o bloco selecionado
+        const blocks = document.querySelectorAll('.tree-item');
+        blocks.forEach(block => {
+            if (block.dataset.blockId === blockId) {
+                block.classList.add('selected');
+            } else {
+                block.classList.remove('selected');
+            }
+        });
+
+        // Mostrar o formulário de pergunta
+        this.questionForm.classList.remove('hidden-inline');
+        
+        // Renderizar as perguntas do bloco
+        this.render();
+        
+        // Scroll para o formulário de pergunta
+        this.questionForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    loadQuestionnaire() {
+        console.log('[UI] Carregando questionário');
+        const questionnaire = this.questionnaireManager.questionnaire;
+        
+        // Renderizar blocos
+        this.blocksTree.innerHTML = '';
+        questionnaire.blocks.forEach(block => {
+            const blockElement = this.createBlockElement(block);
+            this.blocksTree.appendChild(blockElement);
+        });
+
+        // Se houver um bloco selecionado, renderizar suas perguntas
+        if (this.currentBlockId) {
+            console.log('[UI] Renderizando perguntas do bloco selecionado:', this.currentBlockId);
+            this.render();
+        }
+    }
+
+    renderQuestionDetails(question) {
+        let details = '';
+
+        // ID
+        details += `<div class="detail-item">
+            <span class="detail-label">ID:</span>
+            <span class="detail-value">${question.id}</span>
+        </div>`;
+
+        // Título
+        details += `<div class="detail-item">
+            <span class="detail-label">Título:</span>
+            <span class="detail-value">${question.title}</span>
+        </div>`;
+
+        // Tipo
+        details += `<div class="detail-item">
+            <span class="detail-label">Tipo:</span>
+            <span class="detail-value">${question.type}</span>
+        </div>`;
+
+        // Comportamento
+        if (question.behavior) {
+            details += `<div class="detail-item">
+                <span class="detail-label">Comportamento:</span>
+                <span class="detail-value">${question.behavior}</span>
+            </div>`;
+        }
+
+        // Mídia
+        if (question.media) {
+            details += `<div class="detail-item">
+                <span class="detail-label">Mídia:</span>
+                <span class="detail-value">${question.media}</span>
+            </div>`;
+        }
+
+        // Tamanho
+        if (question.size) {
+            details += `<div class="detail-item">
+                <span class="detail-label">Tamanho:</span>
+                <span class="detail-value">${question.size}</span>
+            </div>`;
+        }
+
+        // Referência
+        if (question.reference) {
+            details += `<div class="detail-item">
+                <span class="detail-label">Referência:</span>
+                <span class="detail-value">${question.reference}</span>
+            </div>`;
+        }
+
+        // Replicação
+        if (question.replication) {
+            details += `<div class="detail-item">
+                <span class="detail-label">Replicação:</span>
+                <span class="detail-value">${question.replication}</span>
+            </div>`;
+        }
+
+        // Opções
+        if (question.Options && Object.keys(question.Options).length > 0) {
+            details += `<div class="detail-item">
+                <span class="detail-label">Opções:</span>
+                <div class="detail-value options-list">
+                    ${Object.entries(question.Options).map(([key, value]) => `
+                        <div class="option-item">
+                            <span class="option-key">${key}:</span>
+                            <span class="option-value">${value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        }
+
+        // Outra Opção
+        if (question.OpOther) {
+            details += `<div class="detail-item">
+                <span class="detail-label">Outra Opção:</span>
+                <span class="detail-value">${question.OpOther}</span>
+            </div>`;
+        }
+
+        // Campos booleanos
+        const booleanFields = [
+            { key: 'allowOnlyNumbers', label: 'Permitir apenas números' },
+            { key: 'showDontKnow', label: 'Mostrar "Não sei"' },
+            { key: 'showDontAnswer', label: 'Mostrar "Não responder"' },
+            { key: 'showDontApply', label: 'Mostrar "Não se aplica"' }
+        ];
+
+        const activeBooleanFields = booleanFields.filter(field => question[field.key]);
+        if (activeBooleanFields.length > 0) {
+            details += `<div class="detail-item">
+                <span class="detail-label">Configurações:</span>
+                <div class="detail-value boolean-list">
+                    ${activeBooleanFields.map(field => `
+                        <div class="boolean-item">
+                            <i class="fas fa-check"></i>
+                            <span>${field.label}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        }
+
+        // Dependências
+        if (question.dependencies && question.dependencies.length > 0) {
+            details += `<div class="detail-item">
+                <span class="detail-label">Dependências:</span>
+                <div class="detail-value dependencies-list">
+                    ${question.dependencies.map(dep => `
+                        <div class="dependency-item">
+                            <span class="dependency-question">${dep.question}</span>
+                            <span class="dependency-operator">${dep.operator}</span>
+                            <span class="dependency-value">${dep.value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        }
+
+        return details;
     }
 }
