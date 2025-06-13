@@ -352,6 +352,9 @@ class QuestionnaireUI {
                 <span class="question-type">${questionTypeMap[question.type] || question.type}</span>
             </div>
             <div class="question-item-actions">
+                <button class="move-question-btn" title="Mover pergunta">
+                    <i class="fas fa-arrows-alt-h"></i>
+                </button>
                 <button class="edit-question-btn" title="Editar pergunta">
                     <i class="fas fa-edit"></i>
                 </button>
@@ -368,6 +371,7 @@ class QuestionnaireUI {
         const editBtn = header.querySelector('.edit-question-btn');
         const deleteBtn = header.querySelector('.delete-question-btn');
         const toggleBtn = header.querySelector('.toggle-question-btn');
+        const moveBtn = header.querySelector('.move-question-btn');
 
         editBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -392,6 +396,11 @@ class QuestionnaireUI {
             this.toggleQuestion(question, div);
         });
 
+        moveBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showMoveQuestionMenu(e, question);
+        });
+
         // Adicionar evento de clique no header para expandir/recolher
         header.addEventListener('click', (e) => {
             // Verifica se o clique não foi em nenhum dos botões de ação
@@ -412,6 +421,80 @@ class QuestionnaireUI {
 
         div.appendChild(content);
         return div;
+    }
+
+    showMoveQuestionMenu(event, question) {
+        // Remove qualquer menu existente
+        const existingMenu = document.querySelector('.move-question-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        // Cria o menu
+        const menu = document.createElement('div');
+        menu.className = 'move-question-menu';
+
+        // Adiciona as opções de blocos
+        this.questionnaireManager.questionnaire.blocks.forEach(block => {
+            const option = document.createElement('div');
+            option.className = `block-option ${block.id === this.currentBlockId ? 'current' : ''}`;
+            option.innerHTML = `
+                <i class="fas fa-cube"></i>
+                <span>${block.title}</span>
+            `;
+
+            if (block.id !== this.currentBlockId) {
+                option.addEventListener('click', () => {
+                    this.moveQuestionToBlock(question, block.id);
+                    menu.remove();
+                });
+            }
+
+            menu.appendChild(option);
+        });
+
+        // Posiciona o menu
+        const button = event.target.closest('.move-question-btn');
+        const rect = button.getBoundingClientRect();
+        menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
+        menu.style.left = `${rect.left + window.scrollX}px`;
+
+        // Adiciona o menu ao documento
+        document.body.appendChild(menu);
+
+        // Fecha o menu ao clicar fora
+        const closeMenu = (e) => {
+            if (!menu.contains(e.target) && !button.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+
+        // Adiciona o evento com um pequeno delay para não fechar imediatamente
+        setTimeout(() => {
+            document.addEventListener('click', closeMenu);
+        }, 100);
+    }
+
+    moveQuestionToBlock(question, targetBlockId) {
+        if (!this.currentBlockId) return;
+
+        const sourceBlock = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+        const targetBlock = this.questionnaireManager.questionnaire.getBlock(targetBlockId);
+
+        if (!sourceBlock || !targetBlock) return;
+
+        // Remove a pergunta do bloco atual
+        const questionIndex = sourceBlock.questions.findIndex(q => q.id === question.id);
+        if (questionIndex === -1) return;
+
+        const [movedQuestion] = sourceBlock.questions.splice(questionIndex, 1);
+
+        // Adiciona a pergunta ao final do bloco de destino
+        targetBlock.questions.push(movedQuestion);
+
+        // Atualiza a interface
+        this.render();
     }
 
     handleQuestionDragStart(e) {
