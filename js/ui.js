@@ -355,6 +355,9 @@ class QuestionnaireUI {
                 <button class="move-question-btn" title="Mover pergunta">
                     <i class="fas fa-arrows-alt-h"></i>
                 </button>
+                <button class="duplicate-question-btn" title="Duplicar pergunta">
+                    <i class="fas fa-copy"></i>
+                </button>
                 <button class="edit-question-btn" title="Editar pergunta">
                     <i class="fas fa-edit"></i>
                 </button>
@@ -372,6 +375,7 @@ class QuestionnaireUI {
         const deleteBtn = header.querySelector('.delete-question-btn');
         const toggleBtn = header.querySelector('.toggle-question-btn');
         const moveBtn = header.querySelector('.move-question-btn');
+        const duplicateBtn = header.querySelector('.duplicate-question-btn');
 
         editBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -401,6 +405,11 @@ class QuestionnaireUI {
             this.showMoveQuestionMenu(e, question);
         });
 
+        duplicateBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.duplicateQuestion(question);
+        });
+
         // Adicionar evento de clique no header para expandir/recolher
         header.addEventListener('click', (e) => {
             // Verifica se o clique não foi em nenhum dos botões de ação
@@ -421,6 +430,31 @@ class QuestionnaireUI {
 
         div.appendChild(content);
         return div;
+    }
+
+    duplicateQuestion(question) {
+        if (!this.currentBlockId) return;
+
+        const block = this.questionnaireManager.questionnaire.getBlock(this.currentBlockId);
+        if (!block) return;
+
+        // Cria uma cópia profunda da pergunta
+        const duplicatedQuestion = JSON.parse(JSON.stringify(question));
+        
+        // Gera um novo ID para a pergunta duplicada
+        duplicatedQuestion.id = `q_${Date.now()}`;
+        
+        // Adiciona "(cópia)" ao título
+        duplicatedQuestion.title = `${duplicatedQuestion.title} (cópia)`;
+        
+        // Encontra o índice da pergunta original
+        const originalIndex = block.questions.findIndex(q => q.id === question.id);
+        
+        // Insere a pergunta duplicada logo após a original
+        block.questions.splice(originalIndex + 1, 0, duplicatedQuestion);
+        
+        // Atualiza a interface
+        this.render();
     }
 
     showMoveQuestionMenu(event, question) {
